@@ -69,7 +69,7 @@ function Message({ item }: MessageProps) {
     <span className="flex">
       <span className="flex flex-col mx-3 py-1 px-4 rounded-lg bg-[#fff]">
         <span className="flex gap-1 text-sm">
-          <p className="text-sm font-semibold">{item.user}:</p> |
+          <p className="max-w-[100px] overflow-hidden text-sm font-semibold">{item.user}:</p> |
           <p>
             {String(time?.getFullYear())} {String(time?.getDate())} {month}{" "}
             {time?.getHours()}:{time?.getMinutes()}

@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { authFirebase } from "../firebase/config";
+import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { authFirebase, provider } from "../firebase/config";
+import { contextData } from "../context/logic";
 import MyButton from "../components/UI/my-buttons/MyButton";
+import Cookie from "universal-cookie";
+import GoogleIcon from "../components/UI/my-icons/GoogleIcon";
+const cookie = new Cookie();
 
 function Register() {
+  const { setIsAuth } = useContext(contextData);
   const [eye, setEye] = useState<boolean>(true);
   const [login, setLogin] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -12,8 +17,9 @@ function Register() {
   const [passwordSecond, setPasswordSecond] = useState<string>("");
   const navigate = useNavigate();
 
-  const check = () => {
-    if (password !== passwordSecond) {
+  const check = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (password !== passwordSecond || password.length === 0) {
       setErrorMessage("Passwords are not matching");
     } else {
       handleSignUp();
@@ -40,63 +46,87 @@ function Register() {
       });
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      const result = await signInWithPopup(authFirebase, provider);
+      cookie.set("auth-token", result.user.refreshToken);
+      setIsAuth(true);
+      navigate("/");
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   return (
     <div>
       <div className="w-full h-[800px] flex justify-center items-center">
-        <section className="w-[350px] min-h-[400px] flex flex-col items-center bg-white rounded-lg">
+        <section className="w-[350px] min-h-[450px] flex flex-col items-center bg-white rounded-lg">
           <h2 className="w-full text-center text-3xl font-Alumni border-b-2 border-black">
-            Register
+            Sign Up
           </h2>
           <div className="flex flex-col gap-2 items-center mt-[50px]">
-            <input
-              className="bg-[#aaaaaa] rounded w-[260px] h-[40px] ps-4 placeholder-black font-Alumni text-md"
-              type="email"
-              placeholder="Email"
-              value={login}
-              onChange={(e) => setLogin(e.target.value)}
-            />
-            <div className="relative">
+            <form className="flex flex-col gap-2" onSubmit={check}>
               <input
                 className="bg-[#aaaaaa] rounded w-[260px] h-[40px] ps-4 placeholder-black font-Alumni text-md"
-                type={eye ? "password" : "text"}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                type="email"
+                placeholder="Email"
+                value={login}
+                onChange={(e) => setLogin(e.target.value)}
               />
-              <span
-                className="absolute top-2 right-2 cursor-pointer"
-                onClick={() => setEye(eye ? false : true)}
-              >
-                <img src="img/eye.png" alt="eye" width={25} height={25} />
+              <div className="relative">
+                <input
+                  className="bg-[#aaaaaa] rounded w-[260px] h-[40px] ps-4 placeholder-black font-Alumni text-md"
+                  type={eye ? "password" : "text"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <span
+                  className="absolute top-2 right-2 cursor-pointer"
+                  onClick={() => setEye(eye ? false : true)}
+                >
+                  <img src="img/eye.png" alt="eye" width={25} height={25} />
+                </span>
+              </div>
+              <div className="relative">
+                <input
+                  className="bg-[#aaaaaa] rounded w-[260px] h-[40px] ps-4 placeholder-black font-Alumni text-md"
+                  type={eye ? "password" : "text"}
+                  placeholder="Repeat password"
+                  value={passwordSecond}
+                  onChange={(e) => setPasswordSecond(e.target.value)}
+                />
+                <span
+                  className="absolute top-2 right-2 cursor-pointer"
+                  onClick={() => setEye(eye ? false : true)}
+                >
+                  <img src="img/eye.png" alt="eye" width={25} height={25} />
+                </span>
+              </div>
+              <span className="text-center py-2">
+                <Link to="/login">
+                  <small>Do you have account? Sign In</small>
+                </Link>
               </span>
-            </div>
-            <div className="relative">
-              <input
-                className="bg-[#aaaaaa] rounded w-[260px] h-[40px] ps-4 placeholder-black font-Alumni text-md"
-                type={eye ? "password" : "text"}
-                placeholder="Repeat password"
-                value={passwordSecond}
-                onChange={(e) => setPasswordSecond(e.target.value)}
-              />
-              <span
-                className="absolute top-2 right-2 cursor-pointer"
-                onClick={() => setEye(eye ? false : true)}
-              >
-                <img src="img/eye.png" alt="eye" width={25} height={25} />
-              </span>
-            </div>
-            <span className="py-2">
-              <Link to="/login">
-                <small>Do you have account? Login</small>
-              </Link>
-            </span>
-            <div onClick={() => check()} className="w-full">
-              <MyButton className="w-full border border-[#3758c5] hover:text-white">
-                Регистрация
-              </MyButton>
-            </div>
+              <div className="w-full flex flex-col gap-2">
+                <span>
+                  <MyButton
+                    type="submit"
+                    className="w-full border border-[#3758c5] hover:text-white"
+                  >
+                    Sign Up
+                  </MyButton>
+                </span>
+                <span onClick={() => signInWithGoogle()}>
+                  <MyButton className="flex justify-center items-center gap-3 text-md w-full border border-[#000] hover:bg-[#fff]">
+                    <GoogleIcon />
+                    Sign Up With Google
+                  </MyButton>
+                </span>
+              </div>
+            </form>
             <strong className="text-red-500 font-semibold">
-              {<p>{errorMessage}</p>}
+              {<p className="py-4">{errorMessage}</p>}
             </strong>
           </div>
         </section>
